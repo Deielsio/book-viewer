@@ -4,606 +4,538 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document Editor</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .menu-bar {
+            background: #f8f8f8;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 8px 16px;
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+        }
+        .menu-bar span { cursor: pointer; color: #666; }
+        .menu-bar span:first-child { font-weight: 500; color: #333; }
+        .menu-bar .tutorial { color: #4a90e2; font-weight: 500; }
+        .toolbar {
+            background: #fafafa;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .toolbar button {
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #d0d0d0;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-right: 8px;
+        }
+        .status-bar {
+            background: #f0f0f0;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 6px 16px;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+        .main-area {
+            flex: 1;
+            background: #e8e8e8;
+            overflow: auto;
+            padding: 40px 20px;
+        }
+        .viewer {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 60px 80px;
+            min-height: 800px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            line-height: 1.8;
+            font-family: Georgia, serif;
+        }
+        .library {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px 60px;
+        }
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .book-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .book-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-color: #4a90e2;
+        }
+        .book-cover {
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+        }
+        .book-info {
+            padding: 15px;
+        }
+        .progress-bar {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a90e2 0%, #357abd 100%);
+            transition: width 0.3s;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: auto;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-secondary { background: white; color: #666; border: 1px solid #ccc; }
+        iframe { width: 100%; height: 700px; border: none; }
+        .hidden { display: none !important; }
+    </style>
 </head>
-<body style="margin: 0; padding: 0;">
-    <div id="root"></div>
+<body>
+    <div class="menu-bar">
+        <span>File</span>
+        <span>Edit</span>
+        <span>View</span>
+        <span>Insert</span>
+        <span>Format</span>
+        <span>Tools</span>
+        <span class="tutorial" onclick="showTutorial()">📚 Setup AI Recap</span>
+        <span>Help</span>
+    </div>
 
-    <script type="text/babel">
-        const { useState } = React;
+    <div class="toolbar">
+        <div>
+            <button onclick="openFile()">📁 Open</button>
+            <button>💾 Save</button>
+            <button>📋 Copy</button>
+            <button>🖨️ Print</button>
+        </div>
+        <div id="zoomControls" class="hidden">
+            <button onclick="zoomOut()">-</button>
+            <span id="zoomLevel">100%</span>
+            <button onclick="zoomIn()">+</button>
+        </div>
+    </div>
 
-        const Upload = ({ size, style }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={style}>
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-            </svg>
-        );
+    <div id="statusBar" class="status-bar hidden">
+        <div>
+            <span id="fileName"></span>
+        </div>
+        <div>
+            <span id="progress"></span>
+            <span style="margin-left: 20px;">Read-only</span>
+        </div>
+    </div>
 
-        const FileText = ({ size, style }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={style}>
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <polyline points="10 9 9 9 8 9"/>
-            </svg>
-        );
+    <div class="main-area" id="mainArea">
+        <div class="library">
+            <h1>Welcome Back</h1>
+            <p style="color: #666; margin-top: 10px;">Continue reading or start a new book</p>
+            <div id="bookGrid" class="book-grid"></div>
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-primary" onclick="openFile()">+ Open New Book</button>
+            </div>
+        </div>
+    </div>
 
-        const ZoomIn = ({ size }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/>
-            </svg>
-        );
+    <div class="status-bar">
+        <span>Ready</span>
+        <span>UTF-8</span>
+    </div>
 
-        const ZoomOut = ({ size }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="M21 21l-4.35-4.35M8 11h6"/>
-            </svg>
-        );
+    <!-- Modals -->
+    <div id="recapModal" class="modal">
+        <div class="modal-content">
+            <h2>📚 Welcome Back!</h2>
+            <div id="recapContent"></div>
+        </div>
+    </div>
 
-        const AlertCircle = ({ size, style }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={style}>
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-        );
+    <div id="apiKeyModal" class="modal">
+        <div class="modal-content">
+            <h3>🔑 Enable AI Recap Feature</h3>
+            <p>Enter your free Google Gemini API key to enable AI recaps.</p>
+            <button class="btn btn-secondary" onclick="showTutorial(); hideModal('apiKeyModal')">📖 View Tutorial</button>
+            <input type="password" id="apiKeyInput" placeholder="Enter your Gemini API key">
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="skipRecap()">Skip</button>
+                <button class="btn btn-primary" onclick="saveApiKey()">Save</button>
+            </div>
+        </div>
+    </div>
 
-        const Save = ({ size }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                <polyline points="17 21 17 13 7 13 7 21"/>
-                <polyline points="7 3 7 8 15 8"/>
-            </svg>
-        );
+    <div id="tutorialModal" class="modal">
+        <div class="modal-content">
+            <h2>🤖 AI Recap Tutorial</h2>
+            <p>Get AI summaries when you return to your book - 100% FREE using Google's Gemini API!</p>
+            <h3 style="margin-top: 20px;">Step 1: Get Your Free API Key</h3>
+            <p>Visit Google AI Studio:</p>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn btn-primary">Open Google AI Studio</a>
+            <h3 style="margin-top: 20px;">Step 2: Create API Key</h3>
+            <ul style="padding-left: 20px; line-height: 1.8;">
+                <li>Click "Get API key" or "Create API key"</li>
+                <li>Choose "Create API key in new project"</li>
+                <li>Copy your generated key</li>
+            </ul>
+            <h3 style="margin-top: 20px;">Step 3: Add Key Here</h3>
+            <p>Paste your API key when prompted or click "📚 Setup AI Recap" anytime.</p>
+            <div style="text-align: right; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="hideModal('tutorialModal')">Got It!</button>
+            </div>
+        </div>
+    </div>
 
-        const Copy = ({ size }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-        );
+    <input type="file" id="fileInput" accept=".pdf,.epub" style="display: none;">
 
-        const Printer = ({ size }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="6 9 6 2 18 2 18 9"/>
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                <rect x="6" y="14" width="12" height="8"/>
-            </svg>
-        );
+    <script>
+        let currentFile = null;
+        let currentZoom = 100;
+        let scrollTimeout = null;
+        let pdfUrl = null;
 
-        const FolderOpen = ({ size }) => (
-            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-            </svg>
-        );
+        const fileInput = document.getElementById('fileInput');
 
-        const BookViewer = () => {
-            const [file, setFile] = useState(null);
-            const [content, setContent] = useState('');
-            const [loading, setLoading] = useState(false);
-            const [zoom, setZoom] = useState(100);
-            const [fileType, setFileType] = useState('');
-            const [error, setError] = useState('');
-            const [showUpload, setShowUpload] = useState(false);
+        // Load library on start
+        window.addEventListener('load', loadLibrary);
 
-            const loadJSZip = () => {
-                return new Promise((resolve, reject) => {
-                    if (window.JSZip) {
-                        resolve(window.JSZip);
-                        return;
-                    }
-                    
-                    const script = document.createElement('script');
-                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-                    script.onload = () => resolve(window.JSZip);
-                    script.onerror = () => reject(new Error('Failed to load JSZip library'));
-                    document.head.appendChild(script);
-                });
-            };
+        async function loadLibrary() {
+            const history = JSON.parse(localStorage.getItem('book_history') || '[]');
+            const grid = document.getElementById('bookGrid');
+            
+            if (history.length === 0) {
+                grid.innerHTML = '<div style="text-align: center; padding: 80px; color: #999;"><h2>No books yet</h2><p>Open your first book to get started</p></div>';
+                return;
+            }
 
-            const handleFileUpload = async (e) => {
-                const uploadedFile = e.target.files[0];
-                if (!uploadedFile) return;
+            grid.innerHTML = '';
+            for (let book of history.slice(0, 8)) {
+                const progress = localStorage.getItem(`progress_${book.filename}`) || 0;
+                const card = createBookCard(book, progress);
+                grid.appendChild(card);
+            }
+        }
 
-                setLoading(true);
-                setFile(uploadedFile);
-                setError('');
-                setContent('');
-                setShowUpload(false);
-                
-                const fileName = uploadedFile.name.toLowerCase();
-                const type = uploadedFile.type;
-                setFileType(type);
-
-                try {
-                    if (fileName.endsWith('.pdf') || type === 'application/pdf') {
-                        await handlePDF(uploadedFile);
-                    } else if (fileName.endsWith('.epub') || type === 'application/epub+zip') {
-                        await handleEPUB(uploadedFile);
-                    } else {
-                        throw new Error('Unsupported file type. Please upload a PDF or EPUB file.');
-                    }
-                } catch (error) {
-                    console.error('Error loading file:', error);
-                    setError(`Error: ${error.message || 'Could not load file. Please try a different file.'}`);
-                    setContent('');
-                }
-                
-                setLoading(false);
-            };
-
-            const handlePDF = async (file) => {
-                try {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-                    const url = URL.createObjectURL(blob);
-                    
-                    setContent(`
-                        <div style="width: 100%; height: 100%; display: flex; justify-content: center;">
-                            <iframe 
-                                src="${url}" 
-                                type="application/pdf" 
-                                width="100%" 
-                                height="700px"
-                                style="border: none;"
-                            ></iframe>
+        function createBookCard(book, progress) {
+            const card = document.createElement('div');
+            card.className = 'book-card';
+            card.onclick = () => reopenBook(book.filename);
+            
+            card.innerHTML = `
+                <div class="book-cover">📖</div>
+                <div class="book-info">
+                    <h3 style="font-size: 16px; margin-bottom: 8px;">${book.title}</h3>
+                    <p style="font-size: 13px; color: #666;">Last opened: ${new Date(book.lastOpened).toLocaleDateString()}</p>
+                    <div style="margin-top: 12px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
+                            <span>Progress</span>
+                            <span style="color: #4a90e2; font-weight: 600;">${Math.round(progress)}%</span>
                         </div>
-                    `);
-                } catch (err) {
-                    throw new Error('Failed to load PDF file. The file may be corrupted or too large.');
-                }
-            };
-
-            const handleEPUB = async (file) => {
-                try {
-                    const JSZip = await loadJSZip();
-                    
-                    const arrayBuffer = await file.arrayBuffer();
-                    const zip = await JSZip.loadAsync(arrayBuffer);
-                    
-                    let htmlContent = '';
-                    
-                    const possiblePaths = [
-                        'OEBPS/content.opf',
-                        'OPS/content.opf', 
-                        'EPUB/content.opf',
-                        'content.opf'
-                    ];
-                    
-                    let contentOpf = null;
-                    for (const path of possiblePaths) {
-                        try {
-                            contentOpf = await zip.file(path)?.async('string');
-                            if (contentOpf) break;
-                        } catch (e) {
-                            continue;
-                        }
-                    }
-                    
-                    if (contentOpf) {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(contentOpf, 'text/xml');
-                        const manifest = doc.querySelectorAll('manifest item[media-type*="html"]');
-                        
-                        for (let item of manifest) {
-                            const href = item.getAttribute('href');
-                            if (!href) continue;
-                            
-                            const basePaths = ['OEBPS/', 'OPS/', 'EPUB/', ''];
-                            let fileContent = null;
-                            
-                            for (const basePath of basePaths) {
-                                try {
-                                    fileContent = await zip.file(basePath + href)?.async('string');
-                                    if (fileContent) break;
-                                } catch (e) {
-                                    continue;
-                                }
-                            }
-                            
-                            if (fileContent) {
-                                const contentDoc = parser.parseFromString(fileContent, 'text/html');
-                                const body = contentDoc.querySelector('body');
-                                if (body) {
-                                    htmlContent += body.innerHTML + '<div style="height: 40px;"></div>';
-                                }
-                            }
-                        }
-                    }
-                    
-                    if (!htmlContent) {
-                        const allFiles = Object.keys(zip.files);
-                        const htmlFiles = allFiles.filter(f => 
-                            (f.endsWith('.html') || f.endsWith('.xhtml')) && 
-                            !f.includes('nav.') && 
-                            !f.includes('toc.')
-                        );
-                        
-                        for (let filePath of htmlFiles) {
-                            try {
-                                const fileContent = await zip.file(filePath)?.async('string');
-                                if (fileContent) {
-                                    const parser = new DOMParser();
-                                    const doc = parser.parseFromString(fileContent, 'text/html');
-                                    const body = doc.querySelector('body');
-                                    if (body) {
-                                        htmlContent += body.innerHTML + '<div style="height: 40px;"></div>';
-                                    }
-                                }
-                            } catch (e) {
-                                console.error('Error reading file:', filePath, e);
-                            }
-                        }
-                    }
-                    
-                    if (!htmlContent || htmlContent.trim().length < 50) {
-                        throw new Error('No readable content found in EPUB file. The file may be encrypted or corrupted.');
-                    }
-                    
-                    setContent(htmlContent);
-                } catch (err) {
-                    throw new Error(`Failed to load EPUB: ${err.message}`);
-                }
-            };
-
-            return (
-                <div style={{ 
-                    minHeight: '100vh', 
-                    background: '#ffffff',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}>
-                    <div style={{
-                        background: '#f8f8f8',
-                        borderBottom: '1px solid #e0e0e0',
-                        padding: '8px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '20px',
-                        fontSize: '14px'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                            <span style={{ fontWeight: '500', cursor: 'pointer' }}>File</span>
-                            <span style={{ cursor: 'pointer', color: '#666' }}>Edit</span>
-                            <span style={{ cursor: 'pointer', color: '#666' }}>View</span>
-                            <span style={{ cursor: 'pointer', color: '#666' }}>Insert</span>
-                            <span style={{ cursor: 'pointer', color: '#666' }}>Format</span>
-                            <span style={{ cursor: 'pointer', color: '#666' }}>Tools</span>
-                            <span style={{ cursor: 'pointer', color: '#666' }}>Help</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progress}%"></div>
                         </div>
-                    </div>
-
-                    <div style={{
-                        background: '#fafafa',
-                        borderBottom: '1px solid #e0e0e0',
-                        padding: '8px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '12px'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <button
-                                onClick={() => setShowUpload(true)}
-                                style={{
-                                    padding: '6px 12px',
-                                    background: 'white',
-                                    border: '1px solid #d0d0d0',
-                                    borderRadius: '3px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    fontSize: '13px',
-                                    color: '#333'
-                                }}
-                            >
-                                <FolderOpen size={16} />
-                                <span>Open</span>
-                            </button>
-                            <button
-                                style={{
-                                    padding: '6px 12px',
-                                    background: 'white',
-                                    border: '1px solid #d0d0d0',
-                                    borderRadius: '3px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    fontSize: '13px',
-                                    color: '#333'
-                                }}
-                            >
-                                <Save size={16} />
-                                <span>Save</span>
-                            </button>
-                            
-                            <div style={{ width: '1px', height: '24px', background: '#d0d0d0', margin: '0 4px' }}></div>
-                            
-                            <button
-                                style={{
-                                    padding: '6px 12px',
-                                    background: 'white',
-                                    border: '1px solid #d0d0d0',
-                                    borderRadius: '3px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    fontSize: '13px',
-                                    color: '#333'
-                                }}
-                            >
-                                <Copy size={16} />
-                            </button>
-                            <button
-                                style={{
-                                    padding: '6px 12px',
-                                    background: 'white',
-                                    border: '1px solid #d0d0d0',
-                                    borderRadius: '3px',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    fontSize: '13px',
-                                    color: '#333'
-                                }}
-                            >
-                                <Printer size={16} />
-                            </button>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {content && fileType !== 'application/pdf' && !file?.name.toLowerCase().endsWith('.pdf') && (
-                                <>
-                                    <button
-                                        onClick={() => setZoom(Math.max(50, zoom - 10))}
-                                        style={{
-                                            padding: '6px 10px',
-                                            background: 'white',
-                                            border: '1px solid #d0d0d0',
-                                            borderRadius: '3px',
-                                            cursor: 'pointer',
-                                            fontSize: '13px',
-                                            color: '#333'
-                                        }}
-                                    >
-                                        <ZoomOut size={16} />
-                                    </button>
-                                    <span style={{ fontSize: '13px', color: '#666', minWidth: '50px', textAlign: 'center' }}>{zoom}%</span>
-                                    <button
-                                        onClick={() => setZoom(Math.min(200, zoom + 10))}
-                                        style={{
-                                            padding: '6px 10px',
-                                            background: 'white',
-                                            border: '1px solid #d0d0d0',
-                                            borderRadius: '3px',
-                                            cursor: 'pointer',
-                                            fontSize: '13px',
-                                            color: '#333'
-                                        }}
-                                    >
-                                        <ZoomIn size={16} />
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-
-                    {file && (
-                        <div style={{
-                            background: '#f0f0f0',
-                            borderBottom: '1px solid #e0e0e0',
-                            padding: '6px 16px',
-                            fontSize: '12px',
-                            color: '#666',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px'
-                        }}>
-                            <FileText size={14} />
-                            <span>{file.name}</span>
-                            <span style={{ marginLeft: 'auto' }}>Read-only</span>
-                        </div>
-                    )}
-
-                    <div style={{
-                        flex: 1,
-                        background: '#e8e8e8',
-                        overflow: 'auto',
-                        padding: '40px 20px'
-                    }}>
-                        {error && (
-                            <div style={{
-                                maxWidth: '800px',
-                                margin: '0 auto 20px',
-                                padding: '12px 16px',
-                                background: '#fff3cd',
-                                border: '1px solid #ffc107',
-                                borderRadius: '4px',
-                                display: 'flex',
-                                alignItems: 'start',
-                                gap: '10px'
-                            }}>
-                                <AlertCircle size={18} style={{ color: '#856404', flexShrink: 0 }} />
-                                <div style={{ fontSize: '13px', color: '#856404' }}>{error}</div>
-                            </div>
-                        )}
-
-                        {loading && (
-                            <div style={{ 
-                                maxWidth: '800px',
-                                margin: '0 auto',
-                                background: 'white',
-                                borderRadius: '2px',
-                                padding: '60px',
-                                textAlign: 'center',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
-                            }}>
-                                <div style={{
-                                    display: 'inline-block',
-                                    width: '40px',
-                                    height: '40px',
-                                    border: '4px solid #f3f3f3',
-                                    borderTop: '4px solid #666',
-                                    borderRadius: '50%',
-                                    animation: 'spin 1s linear infinite'
-                                }} />
-                                <p style={{ marginTop: '20px', color: '#666', fontSize: '14px' }}>Loading document...</p>
-                                <style>{`
-                                    @keyframes spin {
-                                        0% { transform: rotate(0deg); }
-                                        100% { transform: rotate(360deg); }
-                                    }
-                                `}</style>
-                            </div>
-                        )}
-
-                        {!content && !loading && !showUpload && (
-                            <div style={{
-                                maxWidth: '800px',
-                                margin: '0 auto',
-                                background: 'white',
-                                borderRadius: '2px',
-                                padding: '80px 40px',
-                                textAlign: 'center',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
-                            }}>
-                                <FileText size={64} style={{ color: '#ccc', marginBottom: '20px' }} />
-                                <h2 style={{ margin: '0 0 10px 0', fontSize: '18px', color: '#333', fontWeight: '400' }}>
-                                    No document open
-                                </h2>
-                                <p style={{ margin: '0 0 25px 0', color: '#999', fontSize: '14px' }}>
-                                    Start by opening a document
-                                </p>
-                                <button
-                                    onClick={() => setShowUpload(true)}
-                                    style={{
-                                        padding: '10px 24px',
-                                        background: '#4a90e2',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '3px',
-                                        cursor: 'pointer',
-                                        fontSize: '14px'
-                                    }}
-                                >
-                                    Open Document
-                                </button>
-                            </div>
-                        )}
-
-                        {showUpload && !content && (
-                            <div style={{
-                                maxWidth: '800px',
-                                margin: '0 auto',
-                                background: 'white',
-                                borderRadius: '2px',
-                                padding: '40px',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
-                            }}>
-                                <h3 style={{ margin: '0 0 20px 0', fontSize: '16px', color: '#333', fontWeight: '500' }}>
-                                    Open Document
-                                </h3>
-                                <label style={{
-                                    display: 'block',
-                                    border: '2px dashed #ccc',
-                                    borderRadius: '4px',
-                                    padding: '40px 30px',
-                                    textAlign: 'center',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease',
-                                    background: '#fafafa'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.borderColor = '#4a90e2';
-                                    e.currentTarget.style.background = '#f5f9fc';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.borderColor = '#ccc';
-                                    e.currentTarget.style.background = '#fafafa';
-                                }}>
-                                    <Upload size={40} style={{ color: '#999', marginBottom: '15px' }} />
-                                    <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#333' }}>
-                                        Choose a file to open
-                                    </div>
-                                    <div style={{ color: '#999', fontSize: '13px' }}>
-                                        Supported: PDF, EPUB
-                                    </div>
-                                    <input
-                                        type="file"
-                                        accept=".epub,.pdf,application/epub+zip,application/pdf"
-                                        onChange={handleFileUpload}
-                                        style={{ display: 'none' }}
-                                    />
-                                </label>
-                                <div style={{ marginTop: '20px', textAlign: 'center' }}>
-                                    <button
-                                        onClick={() => setShowUpload(false)}
-                                        style={{
-                                            padding: '8px 20px',
-                                            background: 'white',
-                                            color: '#666',
-                                            border: '1px solid #ccc',
-                                            borderRadius: '3px',
-                                            cursor: 'pointer',
-                                            fontSize: '13px'
-                                        }}
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {content && !loading && (
-                            <div style={{
-                                maxWidth: '800px',
-                                margin: '0 auto',
-                                background: 'white',
-                                borderRadius: '2px',
-                                padding: '60px 80px',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
-                                minHeight: '800px'
-                            }}>
-                                <div
-                                    style={{
-                                        fontSize: `${zoom}%`,
-                                        lineHeight: '1.8',
-                                        fontFamily: 'Georgia, "Times New Roman", serif',
-                                        color: '#333'
-                                    }}
-                                    dangerouslySetInnerHTML={{ __html: content }}
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    <div style={{
-                        background: '#f0f0f0',
-                        borderTop: '1px solid #d0d0d0',
-                        padding: '4px 16px',
-                        fontSize: '12px',
-                        color: '#666',
-                        display: 'flex',
-                        justifyContent: 'space-between'
-                    }}>
-                        <span>Ready</span>
-                        <span>UTF-8</span>
                     </div>
                 </div>
-            );
-        };
+            `;
+            return card;
+        }
 
-        ReactDOM.render(<BookViewer />, document.getElementById('root'));
+        function reopenBook(filename) {
+            if (confirm(`To reopen "${filename}", please select it from your files.\n\nYour bookmark and progress are saved!`)) {
+                fileInput.click();
+            }
+        }
+
+        function openFile() {
+            fileInput.click();
+        }
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            currentFile = file;
+            showLoading();
+            saveToHistory(file.name);
+
+            try {
+                if (file.name.toLowerCase().endsWith('.pdf')) {
+                    await loadPDF(file);
+                } else if (file.name.toLowerCase().endsWith('.epub')) {
+                    await loadEPUB(file);
+                }
+                
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('statusBar').classList.remove('hidden');
+                
+                // Check for bookmark
+                setTimeout(checkBookmark, 500);
+            } catch (error) {
+                alert('Error: ' + error.message);
+                console.error(error);
+            }
+        });
+
+        async function loadPDF(file) {
+            if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+            
+            const blob = new Blob([await file.arrayBuffer()], { type: 'application/pdf' });
+            pdfUrl = URL.createObjectURL(blob);
+            
+            document.getElementById('mainArea').innerHTML = `
+                <div class="viewer">
+                    <iframe src="${pdfUrl}"></iframe>
+                </div>
+            `;
+        }
+
+        async function loadEPUB(file) {
+            const zip = await JSZip.loadAsync(await file.arrayBuffer());
+            let content = '';
+            
+            const files = Object.keys(zip.files).filter(f => 
+                (f.endsWith('.html') || f.endsWith('.xhtml')) && 
+                !f.includes('nav') && !f.includes('toc')
+            );
+
+            for (let path of files) {
+                try {
+                    const text = await zip.file(path).async('string');
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(text, 'text/html');
+                    const body = doc.querySelector('body');
+                    if (body) content += body.innerHTML + '<div style="height: 40px;"></div>';
+                } catch (err) {
+                    console.error('Error:', path);
+                }
+            }
+
+            if (!content) throw new Error('No content found');
+
+            document.getElementById('mainArea').innerHTML = `<div class="viewer">${content}</div>`;
+            document.getElementById('zoomControls').classList.remove('hidden');
+            
+            // Setup scroll tracking
+            const area = document.getElementById('mainArea');
+            area.onscroll = handleScroll;
+        }
+
+        function handleScroll(e) {
+            if (!currentFile) return;
+            
+            const pos = e.target.scrollTop;
+            const height = e.target.scrollHeight - e.target.clientHeight;
+            const progress = height > 0 ? (pos / height) * 100 : 0;
+            
+            document.getElementById('progress').textContent = `📖 ${Math.round(progress)}%`;
+            
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                localStorage.setItem(`bookmark_${currentFile.name}`, pos);
+                localStorage.setItem(`progress_${currentFile.name}`, progress);
+            }, 2000);
+        }
+
+        function checkBookmark() {
+            if (!currentFile) return;
+            
+            const savedPos = localStorage.getItem(`bookmark_${currentFile.name}`);
+            if (!savedPos || parseInt(savedPos) < 500) {
+                if (savedPos) document.getElementById('mainArea').scrollTop = parseInt(savedPos);
+                return;
+            }
+            
+            const apiKey = localStorage.getItem('gemini_api_key');
+            if (apiKey) {
+                generateRecap(savedPos, apiKey);
+            } else {
+                showModal('apiKeyModal');
+            }
+        }
+
+        async function generateRecap(position, key) {
+            showModal('recapModal');
+            document.getElementById('recapContent').innerHTML = '<p style="text-align: center;">Generating recap...</p>';
+            
+            try {
+                const content = document.querySelector('.viewer').innerText;
+                const excerpt = content.substring(Math.max(0, parseInt(position) - 2000), parseInt(position));
+                
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `Provide a 2-3 sentence recap: ${excerpt.slice(-1500)}` }] }]
+                    })
+                });
+
+                const data = await response.json();
+                const recap = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Unable to generate recap';
+                
+                const progress = localStorage.getItem(`progress_${currentFile.name}`) || 0;
+                
+                document.getElementById('recapContent').innerHTML = `
+                    <div style="background: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        📊 You're ${Math.round(progress)}% through this book
+                    </div>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0;">
+                        <strong>Previously:</strong><br>${recap}
+                    </div>
+                    <div style="text-align: right;">
+                        <button class="btn btn-secondary" onclick="startFromBeginning()">Start Over</button>
+                        <button class="btn btn-primary" onclick="continueReading()">Continue →</button>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('recapContent').innerHTML = '<p style="color: red;">Error generating recap. Check API key.</p>';
+            }
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (!key) return;
+            
+            localStorage.setItem('gemini_api_key', key);
+            hideModal('apiKeyModal');
+            
+            const savedPos = localStorage.getItem(`bookmark_${currentFile.name}`);
+            if (savedPos && parseInt(savedPos) > 500) {
+                generateRecap(savedPos, key);
+            } else if (savedPos) {
+                document.getElementById('mainArea').scrollTop = parseInt(savedPos);
+            }
+        }
+
+        function skipRecap() {
+            hideModal('apiKeyModal');
+            const savedPos = localStorage.getItem(`bookmark_${currentFile.name}`);
+            if (savedPos) document.getElementById('mainArea').scrollTop = parseInt(savedPos);
+        }
+
+        function continueReading() {
+            hideModal('recapModal');
+            const savedPos = localStorage.getItem(`bookmark_${currentFile.name}`);
+            if (savedPos) document.getElementById('mainArea').scrollTop = parseInt(savedPos);
+        }
+
+        function startFromBeginning() {
+            hideModal('recapModal');
+            document.getElementById('mainArea').scrollTop = 0;
+        }
+
+        function saveToHistory(filename) {
+            const title = filename.replace(/\.(epub|pdf)$/i, '').replace(/[-_]/g, ' ');
+            const history = JSON.parse(localStorage.getItem('book_history') || '[]');
+            const index = history.findIndex(b => b.filename === filename);
+            
+            if (index >= 0) history.splice(index, 1);
+            
+            history.unshift({
+                filename: filename,
+                title: title,
+                lastOpened: new Date().toISOString()
+            });
+            
+            if (history.length > 8) history.pop();
+            localStorage.setItem('book_history', JSON.stringify(history));
+        }
+
+        function zoomIn() {
+            currentZoom = Math.min(200, currentZoom + 10);
+            updateZoom();
+        }
+
+        function zoomOut() {
+            currentZoom = Math.max(50, currentZoom - 10);
+            updateZoom();
+        }
+
+        function updateZoom() {
+            document.querySelector('.viewer').style.fontSize = currentZoom + '%';
+            document.getElementById('zoomLevel').textContent = currentZoom + '%';
+        }
+
+        function showModal(id) {
+            document.getElementById(id).classList.add('show');
+        }
+
+        function hideModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+
+        function showTutorial() {
+            showModal('tutorialModal');
+        }
+
+        function showLoading() {
+            document.getElementById('mainArea').innerHTML = '<div class="viewer"><p style="text-align: center; color: #666;">Loading...</p></div>';
+        }
     </script>
 </body>
 </html>
