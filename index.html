@@ -362,50 +362,84 @@
             // Try to find content.opf for proper reading order
             const possiblePaths = ['OEBPS/content.opf', 'OPS/content.opf', 'EPUB/content.opf', 'content.opf'];
             let contentOpf = null;
+            let contentOpfPath = '';
             
             for (let path of possiblePaths) {
                 try {
                     contentOpf = await zip.file(path)?.async('string');
-                    if (contentOpf) break;
+                    if (contentOpf) {
+                        contentOpfPath = path;
+                        break;
+                    }
                 } catch (e) { continue; }
             }
             
             if (contentOpf) {
-                // Parse content.opf to get reading order
                 const parser = new DOMParser();
-                const doc = parser.parseFromString(contentOpf, 'text/xml');
-                const manifest = doc.querySelectorAll('manifest item[media-type*="html"]');
+                const opfDoc = parser.parseFromString(contentOpf, 'text/xml');
                 
-                for (let item of manifest) {
+                // Get the spine (reading order) - this is the correct order!
+                const spineItems = opfDoc.querySelectorAll('spine itemref');
+                const manifest = {};
+                
+                // First, build a manifest lookup
+                opfDoc.querySelectorAll('manifest item').forEach(item => {
+                    const id = item.getAttribute('id');
                     const href = item.getAttribute('href');
+                    if (id && href) {
+                        manifest[id] = href;
+                    }
+                });
+                
+                // Now read files in spine order
+                for (let itemref of spineItems) {
+                    const idref = itemref.getAttribute('idref');
+                    const href = manifest[idref];
+                    
                     if (!href) continue;
                     
-                    // Try different base paths
-                    const basePaths = ['OEBPS/', 'OPS/', 'EPUB/', ''];
-                    let fileContent = null;
+                    // Determine base path from content.opf location
+                    const basePath = contentOpfPath.substring(0, contentOpfPath.lastIndexOf('/') + 1);
+                    const fullPath = basePath + href;
                     
-                    for (let basePath of basePaths) {
-                        try {
-                            fileContent = await zip.file(basePath + href)?.async('string');
-                            if (fileContent) break;
-                        } catch (e) { continue; }
-                    }
-                    
-                    if (fileContent) {
-                        const contentDoc = parser.parseFromString(fileContent, 'text/html');
-                        const body = contentDoc.querySelector('body');
-                        if (body) {
-                            htmlContent += body.innerHTML + '<div style="height: 60px; border-top: 1px solid #eee; margin: 40px 0;"></div>';
+                    try {
+                        const fileContent = await zip.file(fullPath)?.async('string');
+                        if (fileContent) {
+                            const contentDoc = parser.parseFromString(fileContent, 'text/html');
+                            const body = contentDoc.querySelector('body');
+                            if (body) {
+                                // Add chapter separator
+                                htmlContent += body.innerHTML + 
+                                    '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin: 60px 0;">' +
+                                    '<div style="width: 100px; height: 2px; background: linear-gradient(to right, transparent, #ccc, transparent);"></div>' +
+                                    '</div>';
+                            }
                         }
+                    } catch (err) {
+                        console.error('Error reading:', fullPath, err);
                     }
                 }
             }
             
-            // Fallback: if content.opf method didn't work, try finding HTML files
-            if (!htmlContent) {
+            // Fallback: if spine method didn't work, try ordered file list
+            if (!htmlContent || htmlContent.trim().length < 100) {
                 const files = Object.keys(zip.files)
-                    .filter(f => (f.endsWith('.html') || f.endsWith('.xhtml')) && !f.includes('nav') && !f.includes('toc'))
-                    .sort(); // Sort alphabetically for consistent order
+                    .filter(f => {
+                        const lower = f.toLowerCase();
+                        return (lower.endsWith('.html') || lower.endsWith('.xhtml')) && 
+                               !lower.includes('nav') && 
+                               !lower.includes('toc') &&
+                               !lower.includes('cover');
+                    })
+                    .sort((a, b) => {
+                        // Try to sort by chapter numbers if present
+                        const numA = a.match(/\d+/);
+                        const numB = b.match(/\d+/);
+                        if (numA && numB) {
+                            return parseInt(numA[0]) - parseInt(numB[0]);
+                        }
+                        return a.localeCompare(b);
+                    });
 
                 for (let path of files) {
                     try {
@@ -414,7 +448,10 @@
                         const doc = parser.parseFromString(text, 'text/html');
                         const body = doc.querySelector('body');
                         if (body) {
-                            htmlContent += body.innerHTML + '<div style="height: 60px; border-top: 1px solid #eee; margin: 40px 0;"></div>';
+                            htmlContent += body.innerHTML + 
+                                '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin: 60px 0;">' +
+                                '<div style="width: 100px; height: 2px; background: linear-gradient(to right, transparent, #ccc, transparent);"></div>' +
+                                '</div>';
                         }
                     } catch (err) {
                         console.error('Error reading:', path);
