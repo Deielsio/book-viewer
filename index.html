@@ -222,8 +222,8 @@
         <div class="modal-content">
             <h3>🔑 Enable AI Recap Feature</h3>
             <p>Enter your free Google Gemini API key to enable AI recaps.</p>
-            <button class="btn btn-secondary" onclick="showTutorial(); hideModal('apiKeyModal')">📖 View Tutorial</button>
-            <input type="password" id="apiKeyInput" placeholder="Enter your Gemini API key">
+            <button class="btn btn-secondary" onclick="showTutorial(); hideModal('apiKeyModal')" style="margin-bottom: 10px;">📖 View Tutorial</button>
+            <input type="text" id="apiKeyInput" placeholder="Paste your Gemini API key here" style="font-family: monospace;">
             <div style="text-align: right; margin-top: 20px;">
                 <button class="btn btn-secondary" onclick="skipRecap()">Skip</button>
                 <button class="btn btn-primary" onclick="saveApiKey()">Save</button>
@@ -357,28 +357,76 @@
 
         async function loadEPUB(file) {
             const zip = await JSZip.loadAsync(await file.arrayBuffer());
-            let content = '';
+            let htmlContent = '';
             
-            const files = Object.keys(zip.files).filter(f => 
-                (f.endsWith('.html') || f.endsWith('.xhtml')) && 
-                !f.includes('nav') && !f.includes('toc')
-            );
-
-            for (let path of files) {
+            // Try to find content.opf for proper reading order
+            const possiblePaths = ['OEBPS/content.opf', 'OPS/content.opf', 'EPUB/content.opf', 'content.opf'];
+            let contentOpf = null;
+            
+            for (let path of possiblePaths) {
                 try {
-                    const text = await zip.file(path).async('string');
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(text, 'text/html');
-                    const body = doc.querySelector('body');
-                    if (body) content += body.innerHTML + '<div style="height: 40px;"></div>';
-                } catch (err) {
-                    console.error('Error:', path);
+                    contentOpf = await zip.file(path)?.async('string');
+                    if (contentOpf) break;
+                } catch (e) { continue; }
+            }
+            
+            if (contentOpf) {
+                // Parse content.opf to get reading order
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(contentOpf, 'text/xml');
+                const manifest = doc.querySelectorAll('manifest item[media-type*="html"]');
+                
+                for (let item of manifest) {
+                    const href = item.getAttribute('href');
+                    if (!href) continue;
+                    
+                    // Try different base paths
+                    const basePaths = ['OEBPS/', 'OPS/', 'EPUB/', ''];
+                    let fileContent = null;
+                    
+                    for (let basePath of basePaths) {
+                        try {
+                            fileContent = await zip.file(basePath + href)?.async('string');
+                            if (fileContent) break;
+                        } catch (e) { continue; }
+                    }
+                    
+                    if (fileContent) {
+                        const contentDoc = parser.parseFromString(fileContent, 'text/html');
+                        const body = contentDoc.querySelector('body');
+                        if (body) {
+                            htmlContent += body.innerHTML + '<div style="height: 60px; border-top: 1px solid #eee; margin: 40px 0;"></div>';
+                        }
+                    }
+                }
+            }
+            
+            // Fallback: if content.opf method didn't work, try finding HTML files
+            if (!htmlContent) {
+                const files = Object.keys(zip.files)
+                    .filter(f => (f.endsWith('.html') || f.endsWith('.xhtml')) && !f.includes('nav') && !f.includes('toc'))
+                    .sort(); // Sort alphabetically for consistent order
+
+                for (let path of files) {
+                    try {
+                        const text = await zip.file(path).async('string');
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(text, 'text/html');
+                        const body = doc.querySelector('body');
+                        if (body) {
+                            htmlContent += body.innerHTML + '<div style="height: 60px; border-top: 1px solid #eee; margin: 40px 0;"></div>';
+                        }
+                    } catch (err) {
+                        console.error('Error reading:', path);
+                    }
                 }
             }
 
-            if (!content) throw new Error('No content found');
+            if (!htmlContent || htmlContent.trim().length < 50) {
+                throw new Error('No readable content found in EPUB file');
+            }
 
-            document.getElementById('mainArea').innerHTML = `<div class="viewer">${content}</div>`;
+            document.getElementById('mainArea').innerHTML = `<div class="viewer">${htmlContent}</div>`;
             document.getElementById('zoomControls').classList.remove('hidden');
             
             // Setup scroll tracking
