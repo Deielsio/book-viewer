@@ -7,216 +7,32 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #fff;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-        .menu-bar {
-            background: #f8f8f8;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 8px 16px;
-            display: flex;
-            gap: 20px;
-            font-size: 14px;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #fff; display: flex; flex-direction: column; height: 100vh; }
+        .menu-bar { background: #f8f8f8; border-bottom: 1px solid #e0e0e0; padding: 8px 16px; display: flex; gap: 20px; font-size: 14px; }
         .menu-bar span { cursor: pointer; color: #666; }
         .menu-bar span:first-child { font-weight: 500; color: #333; }
         .menu-bar .tutorial { color: #4a90e2; font-weight: 500; }
-        .toolbar {
-            background: #fafafa;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 8px 16px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .toolbar button {
-            padding: 6px 12px;
-            background: white;
-            border: 1px solid #d0d0d0;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 13px;
-            margin-right: 8px;
-        }
-        .status-bar {
-            background: #f0f0f0;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 6px 16px;
-            font-size: 12px;
-            color: #666;
-            display: flex;
-            justify-content: space-between;
-        }
-        .main-area {
-            flex: 1;
-            background: #e8e8e8;
-            overflow: auto;
-            padding: 40px 20px;
-        }
-        .viewer {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 60px 80px;
-            min-height: 800px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-            line-height: 1.8;
-            font-family: Georgia, serif;
-            font-size: 16px;
-            color: #333;
-        }
-        .viewer p {
-            margin: 1em 0;
-            text-align: justify;
-        }
-        .viewer h1, .viewer h2, .viewer h3 {
-            margin: 1.5em 0 0.75em 0;
-            line-height: 1.3;
-            font-weight: 600;
-            color: #222;
-        }
-        .viewer h1 { font-size: 1.8em; }
-        .viewer h2 { font-size: 1.5em; }
-        .viewer h3 { font-size: 1.2em; }
-        .viewer img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 1.5em auto;
-        }
-        .viewer a {
-            color: #4a90e2;
-            text-decoration: none;
-        }
-        .viewer blockquote {
-            margin: 1.5em 2em;
-            padding-left: 1.5em;
-            border-left: 4px solid #ddd;
-            font-style: italic;
-            color: #666;
-        }
-        .viewer code {
-            background: #f5f5f5;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: monospace;
-        }
-        .viewer pre {
-            background: #f5f5f5;
-            padding: 1em;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-        .viewer ul, .viewer ol {
-            margin: 1em 0;
-            padding-left: 2em;
-        }
-        .viewer li {
-            margin: 0.5em 0;
-        }
-        .viewer table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 1.5em 0;
-        }
-        .viewer th, .viewer td {
-            border: 1px solid #ddd;
-            padding: 8px 12px;
-            text-align: left;
-        }
-        .viewer th {
-            background: #f5f5f5;
-            font-weight: 600;
-        }
-        .library {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 40px 60px;
-        }
-        .book-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-        .book-card {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .book-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            border-color: #4a90e2;
-        }
-        .book-cover {
-            height: 200px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 48px;
-        }
-        .book-info {
-            padding: 15px;
-        }
-        .progress-bar {
-            height: 6px;
-            background: #e9ecef;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 12px;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4a90e2 0%, #357abd 100%);
-            transition: width 0.3s;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-        }
+        .toolbar { background: #fafafa; border-bottom: 1px solid #e0e0e0; padding: 8px 16px; display: flex; justify-content: space-between; }
+        .toolbar button { padding: 6px 12px; background: white; border: 1px solid #d0d0d0; border-radius: 3px; cursor: pointer; font-size: 13px; margin-right: 8px; }
+        .status-bar { background: #f0f0f0; border-bottom: 1px solid #e0e0e0; padding: 6px 16px; font-size: 12px; color: #666; display: flex; justify-content: space-between; }
+        .main-area { flex: 1; background: #e8e8e8; overflow: auto; padding: 40px 20px; }
+        .viewer { max-width: 800px; margin: 0 auto; background: white; padding: 60px 80px; min-height: 800px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); line-height: 1.8; font-family: Georgia, serif; font-size: 16px; color: #333; }
+        .viewer p { margin: 1em 0; text-align: justify; }
+        .viewer h1, .viewer h2, .viewer h3 { margin: 1.5em 0 0.75em 0; line-height: 1.3; font-weight: 600; color: #222; }
+        .viewer h1 { font-size: 1.8em; } .viewer h2 { font-size: 1.5em; } .viewer h3 { font-size: 1.2em; }
+        .library { max-width: 1200px; margin: 0 auto; background: white; padding: 40px 60px; }
+        .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
+        .book-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.2s; }
+        .book-card:hover { transform: translateY(-4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-color: #4a90e2; }
+        .book-cover { height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; }
+        .book-info { padding: 15px; }
+        .progress-bar { height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden; margin-top: 12px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4a90e2 0%, #357abd 100%); transition: width 0.3s; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .modal.show { display: flex; }
-        .modal-content {
-            background: white;
-            border-radius: 8px;
-            padding: 30px;
-            max-width: 600px;
-            width: 100%;
-            max-height: 90vh;
-            overflow: auto;
-        }
-        input[type="password"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
+        .modal-content { background: white; border-radius: 8px; padding: 30px; max-width: 600px; width: 100%; max-height: 90vh; overflow: auto; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
         .btn-primary { background: #4a90e2; color: white; }
         .btn-secondary { background: white; color: #666; border: 1px solid #ccc; }
         iframe { width: 100%; height: 700px; border: none; }
@@ -225,708 +41,208 @@
 </head>
 <body>
     <div class="menu-bar">
-        <span>File</span>
-        <span>Edit</span>
-        <span>View</span>
-        <span>Insert</span>
-        <span>Format</span>
-        <span>Tools</span>
+        <span>File</span><span>Edit</span><span>View</span><span>Insert</span><span>Format</span><span>Tools</span>
         <span class="tutorial" onclick="showTutorial()">📚 Setup AI Recap</span>
-        <span onclick="showSettings()">⚙️ Settings</span>
-        <span>Help</span>
+        <span onclick="showSettings()">⚙️ Settings</span><span>Help</span>
     </div>
-
     <div class="toolbar">
-        <div>
-            <button onclick="openFile()">📁 Open</button>
-            <button>💾 Save</button>
-            <button>📋 Copy</button>
-            <button>🖨️ Print</button>
-        </div>
-        <div id="zoomControls" class="hidden">
-            <button onclick="zoomOut()">-</button>
-            <span id="zoomLevel">100%</span>
-            <button onclick="zoomIn()">+</button>
-        </div>
+        <div><button onclick="openFile()">📁 Open</button><button>💾 Save</button><button>📋 Copy</button><button>🖨️ Print</button></div>
+        <div id="zoomControls" class="hidden"><button onclick="zoomOut()">-</button><span id="zoomLevel">100%</span><button onclick="zoomIn()">+</button></div>
     </div>
+    <div id="statusBar" class="status-bar hidden"><div><span id="fileName"></span></div><div><span id="progress"></span><span style="margin-left: 20px;">Read-only</span></div></div>
+    <div class="main-area" id="mainArea"><div class="library"><h1>Welcome Back</h1><p style="color: #666; margin-top: 10px;">Continue reading or start a new book</p><div id="bookGrid" class="book-grid"></div><div style="text-align: center; margin-top: 30px;"><button class="btn btn-primary" onclick="openFile()">+ Open New Book</button></div></div></div>
+    <div class="status-bar"><span>Ready</span><span>UTF-8</span></div>
 
-    <div id="statusBar" class="status-bar hidden">
-        <div>
-            <span id="fileName"></span>
-        </div>
-        <div>
-            <span id="progress"></span>
-            <span style="margin-left: 20px;">Read-only</span>
-        </div>
-    </div>
-
-    <div class="main-area" id="mainArea">
-        <div class="library">
-            <h1>Welcome Back</h1>
-            <p style="color: #666; margin-top: 10px;">Continue reading or start a new book</p>
-            <div id="bookGrid" class="book-grid"></div>
-            <div style="text-align: center; margin-top: 30px;">
-                <button class="btn btn-primary" onclick="openFile()">+ Open New Book</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="status-bar">
-        <span>Ready</span>
-        <span>UTF-8</span>
-    </div>
-
-    <!-- Modals -->
-    <div id="recapModal" class="modal">
-        <div class="modal-content">
-            <h2>📚 Welcome Back!</h2>
-            <div id="recapContent"></div>
-        </div>
-    </div>
-
-    <div id="apiKeyModal" class="modal">
-        <div class="modal-content">
-            <h3>🔑 Enable AI Recap Feature</h3>
-            <p>Enter your free Google Gemini API key to enable AI recaps.</p>
-            <button class="btn btn-secondary" onclick="showTutorial(); hideModal('apiKeyModal')" style="margin-bottom: 10px;">📖 View Tutorial</button>
-            <input type="text" id="apiKeyInput" placeholder="Paste your Gemini API key here" style="font-family: monospace;">
-            <div style="text-align: right; margin-top: 20px;">
-                <button class="btn btn-secondary" onclick="skipRecap()">Skip</button>
-                <button class="btn btn-primary" onclick="saveApiKey()">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="tutorialModal" class="modal">
-        <div class="modal-content">
-            <h2>🤖 AI Recap Tutorial</h2>
-            <p>Get AI summaries when you return to your book - 100% FREE using Google's Gemini API!</p>
-            <h3 style="margin-top: 20px;">Step 1: Get Your Free API Key</h3>
-            <p>Visit Google AI Studio:</p>
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn btn-primary">Open Google AI Studio</a>
-            <h3 style="margin-top: 20px;">Step 2: Create API Key</h3>
-            <ul style="padding-left: 20px; line-height: 1.8;">
-                <li>Click "Get API key" or "Create API key"</li>
-                <li>Choose "Create API key in new project"</li>
-                <li>Copy your generated key</li>
-            </ul>
-            <h3 style="margin-top: 20px;">Step 3: Add Key Here</h3>
-            <p>Paste your API key when prompted or click "⚙️ Settings" anytime.</p>
-            <div style="text-align: right; margin-top: 20px;">
-                <button class="btn btn-primary" onclick="hideModal('tutorialModal')">Got It!</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
-            <h2>⚙️ Settings</h2>
-            
-            <div style="margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 6px;">
-                <h3 style="margin: 0 0 15px 0; font-size: 16px;">🤖 AI Recap Settings</h3>
-                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">
-                    Gemini API Key:
-                </label>
-                <input 
-                    type="text" 
-                    id="settingsApiKey" 
-                    placeholder="Paste your Gemini API key here (starts with AIza...)" 
-                    style="font-family: monospace; width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px;">
-                <div style="font-size: 13px; color: #666; margin-bottom: 10px;">
-                    <span id="apiKeyStatus"></span>
-                </div>
-                <div style="background: #e8f4ff; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-size: 13px; border-left: 4px solid #4a90e2;">
-                    💡 <strong>Tip:</strong> After pasting your key, click "💾 Save & Test" to verify it works!
-                </div>
-                <button class="btn btn-secondary" onclick="showTutorial(); hideModal('settingsModal')" style="margin-right: 8px;">
-                    📖 How to get API key
-                </button>
-                <button class="btn btn-primary" onclick="saveApiKeyFromSettings()">
-                    💾 Save & Test API Key
-                </button>
-            </div>
-
-            <div style="margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 6px;">
-                <h3 style="margin: 0 0 15px 0; font-size: 16px;">📚 Reading Data</h3>
-                <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
-                    Manage your reading history and bookmarks
-                </p>
-                <button class="btn btn-secondary" onclick="clearHistory()" style="margin-right: 8px;">
-                    🗑️ Clear Reading History
-                </button>
-                <button class="btn btn-secondary" onclick="clearAllBookmarks()">
-                    🔖 Clear All Bookmarks
-                </button>
-            </div>
-
-            <div style="margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 6px;">
-                <h3 style="margin: 0 0 15px 0; font-size: 16px;">ℹ️ About</h3>
-                <p style="font-size: 14px; color: #666; line-height: 1.6;">
-                    <strong>Document Editor</strong> - Book Reader<br>
-                    Version 1.0<br>
-                    Supports PDF and EPUB files<br>
-                    Features: Bookmarks, Progress tracking, AI recaps
-                </p>
-            </div>
-
-            <div style="text-align: right; margin-top: 20px;">
-                <button class="btn btn-primary" onclick="hideModal('settingsModal')">Close</button>
-            </div>
-        </div>
-    </div>
+    <div id="recapModal" class="modal"><div class="modal-content"><h2>📚 Welcome Back!</h2><div id="recapContent"></div></div></div>
+    <div id="apiKeyModal" class="modal"><div class="modal-content"><h3>🔑 Enable AI Recap Feature</h3><p>Enter your free Google Gemini API key to enable AI recaps.</p><button class="btn btn-secondary" onclick="showTutorial(); hideModal('apiKeyModal')" style="margin-bottom: 10px;">📖 View Tutorial</button><input type="text" id="apiKeyInput" placeholder="Paste your Gemini API key here" style="font-family: monospace;"><div style="text-align: right; margin-top: 20px;"><button class="btn btn-secondary" onclick="skipRecap()">Skip</button><button class="btn btn-primary" onclick="saveApiKey()">Save</button></div></div></div>
+    <div id="tutorialModal" class="modal"><div class="modal-content"><h2>🤖 AI Recap Tutorial</h2><p>Get AI summaries - 100% FREE!</p><h3 style="margin-top: 20px;">Step 1: Get Your Free API Key</h3><a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn btn-primary">Open Google AI Studio</a><h3 style="margin-top: 20px;">Step 2: Create API Key</h3><ul style="padding-left: 20px; line-height: 1.8;"><li>Click "Get API key"</li><li>Choose "Create API key in new project"</li><li>Copy your key</li></ul><div style="text-align: right; margin-top: 20px;"><button class="btn btn-primary" onclick="hideModal('tutorialModal')">Got It!</button></div></div></div>
+    <div id="settingsModal" class="modal"><div class="modal-content"><h2>⚙️ Settings</h2><div style="margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 6px;"><h3 style="margin: 0 0 15px 0; font-size: 16px;">🤖 AI Recap Settings</h3><label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Gemini API Key:</label><input type="text" id="settingsApiKey" placeholder="AIza..." style="font-family: monospace; width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px;"><div style="font-size: 13px; color: #666; margin-bottom: 10px;"><span id="apiKeyStatus"></span></div><button class="btn btn-secondary" onclick="showTutorial(); hideModal('settingsModal')" style="margin-right: 8px;">📖 How to get API key</button><button class="btn btn-primary" onclick="saveApiKeyFromSettings()">💾 Save & Test</button></div><div style="text-align: right; margin-top: 20px;"><button class="btn btn-primary" onclick="hideModal('settingsModal')">Close</button></div></div></div>
 
     <input type="file" id="fileInput" accept=".pdf,.epub" style="display: none;">
 
     <script>
-        let currentFile = null;
-        let currentZoom = 100;
-        let scrollTimeout = null;
-        let pdfUrl = null;
-
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
+        let currentFile = null, currentZoom = 100, scrollTimeout = null, pdfUrl = null;
         const fileInput = document.getElementById('fileInput');
-
-        // Load library on start
+        
         window.addEventListener('load', loadLibrary);
-
+        
         async function loadLibrary() {
             const history = JSON.parse(localStorage.getItem('book_history') || '[]');
             const grid = document.getElementById('bookGrid');
-            
-            if (history.length === 0) {
-                grid.innerHTML = '<div style="text-align: center; padding: 80px; color: #999;"><h2>No books yet</h2><p>Open your first book to get started</p></div>';
-                return;
-            }
-
+            if (history.length === 0) { grid.innerHTML = '<div style="text-align: center; padding: 80px; color: #999;"><h2>No books yet</h2></div>'; return; }
             grid.innerHTML = '';
             for (let book of history.slice(0, 8)) {
                 const progress = localStorage.getItem(`progress_${book.filename}`) || 0;
-                const card = createBookCard(book, progress);
+                const card = document.createElement('div');
+                card.className = 'book-card';
+                card.onclick = () => reopenBook(book.filename);
+                card.innerHTML = `<div class="book-cover">📖</div><div class="book-info"><h3 style="font-size: 16px; margin-bottom: 8px;">${book.title}</h3><p style="font-size: 13px; color: #666;">Last: ${new Date(book.lastOpened).toLocaleDateString()}</p><div style="margin-top: 12px;"><div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;"><span>Progress</span><span style="color: #4a90e2; font-weight: 600;">${Math.round(progress)}%</span></div><div class="progress-bar"><div class="progress-fill" style="width: ${progress}%"></div></div></div></div>`;
                 grid.appendChild(card);
             }
         }
-
-        function createBookCard(book, progress) {
-            const card = document.createElement('div');
-            card.className = 'book-card';
-            card.onclick = () => reopenBook(book.filename);
-            
-            card.innerHTML = `
-                <div class="book-cover">📖</div>
-                <div class="book-info">
-                    <h3 style="font-size: 16px; margin-bottom: 8px;">${book.title}</h3>
-                    <p style="font-size: 13px; color: #666;">Last opened: ${new Date(book.lastOpened).toLocaleDateString()}</p>
-                    <div style="margin-top: 12px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
-                            <span>Progress</span>
-                            <span style="color: #4a90e2; font-weight: 600;">${Math.round(progress)}%</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${progress}%"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            return card;
-        }
-
-        function reopenBook(filename) {
-            if (confirm(`To reopen "${filename}", please select it from your files.\n\nYour bookmark and progress are saved!`)) {
-                fileInput.click();
-            }
-        }
-
-        function openFile() {
-            fileInput.click();
-        }
-
+        
+        function reopenBook(filename) { if (confirm(`Select "${filename}" to restore progress`)) fileInput.click(); }
+        function openFile() { fileInput.click(); }
+        
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-
             currentFile = file;
-            showLoading();
+            document.getElementById('mainArea').innerHTML = '<div class="viewer"><p style="text-align: center; color: #666;">Loading...</p></div>';
             saveToHistory(file.name);
-
             try {
-                if (file.name.toLowerCase().endsWith('.pdf')) {
-                    await loadPDF(file);
-                } else if (file.name.toLowerCase().endsWith('.epub')) {
-                    await loadEPUB(file);
-                }
-                
+                if (file.name.toLowerCase().endsWith('.pdf')) await loadPDF(file);
+                else if (file.name.toLowerCase().endsWith('.epub')) await loadEPUB(file);
                 document.getElementById('fileName').textContent = file.name;
                 document.getElementById('statusBar').classList.remove('hidden');
-                
-                // Wait for content to be fully rendered before checking bookmark
                 setTimeout(checkBookmark, 1000);
-            } catch (error) {
-                alert('Error: ' + error.message);
-                console.error(error);
-            }
+            } catch (error) { alert('Error: ' + error.message); console.error(error); }
         });
-
+        
         async function loadPDF(file) {
             if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-            
             const blob = new Blob([await file.arrayBuffer()], { type: 'application/pdf' });
             pdfUrl = URL.createObjectURL(blob);
-            
-            document.getElementById('mainArea').innerHTML = `
-                <div class="viewer">
-                    <iframe src="${pdfUrl}"></iframe>
-                </div>
-            `;
+            document.getElementById('mainArea').innerHTML = `<div class="viewer"><iframe src="${pdfUrl}"></iframe></div>`;
         }
-
+        
         async function loadEPUB(file) {
             const zip = await JSZip.loadAsync(await file.arrayBuffer());
             let htmlContent = '';
-            
-            // Try to find content.opf for proper reading order
             const possiblePaths = ['OEBPS/content.opf', 'OPS/content.opf', 'EPUB/content.opf', 'content.opf'];
-            let contentOpf = null;
-            let contentOpfPath = '';
-            
-            for (let path of possiblePaths) {
-                try {
-                    contentOpf = await zip.file(path)?.async('string');
-                    if (contentOpf) {
-                        contentOpfPath = path;
-                        break;
-                    }
-                } catch (e) { continue; }
-            }
-            
+            let contentOpf = null, contentOpfPath = '';
+            for (let path of possiblePaths) { try { contentOpf = await zip.file(path)?.async('string'); if (contentOpf) { contentOpfPath = path; break; } } catch (e) {} }
             if (contentOpf) {
                 const parser = new DOMParser();
                 const opfDoc = parser.parseFromString(contentOpf, 'text/xml');
-                
-                // Get the spine (reading order) - this is the correct order!
                 const spineItems = opfDoc.querySelectorAll('spine itemref');
                 const manifest = {};
-                
-                // First, build a manifest lookup
-                opfDoc.querySelectorAll('manifest item').forEach(item => {
-                    const id = item.getAttribute('id');
-                    const href = item.getAttribute('href');
-                    if (id && href) {
-                        manifest[id] = href;
-                    }
-                });
-                
-                // Now read files in spine order
+                opfDoc.querySelectorAll('manifest item').forEach(item => { const id = item.getAttribute('id'), href = item.getAttribute('href'); if (id && href) manifest[id] = href; });
                 for (let itemref of spineItems) {
-                    const idref = itemref.getAttribute('idref');
-                    const href = manifest[idref];
-                    
+                    const idref = itemref.getAttribute('idref'), href = manifest[idref];
                     if (!href) continue;
-                    
-                    // Determine base path from content.opf location
-                    const basePath = contentOpfPath.substring(0, contentOpfPath.lastIndexOf('/') + 1);
-                    const fullPath = basePath + href;
-                    
+                    const basePath = contentOpfPath.substring(0, contentOpfPath.lastIndexOf('/') + 1), fullPath = basePath + href;
                     try {
                         const fileContent = await zip.file(fullPath)?.async('string');
                         if (fileContent) {
                             const contentDoc = parser.parseFromString(fileContent, 'text/html');
                             const body = contentDoc.querySelector('body');
                             if (body) {
-                                // Add chapter separator
-                                htmlContent += body.innerHTML + 
-                                    '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin: 60px 0;">' +
-                                    '<div style="width: 100px; height: 2px; background: linear-gradient(to right, transparent, #ccc, transparent);"></div>' +
-                                    '</div>';
+                                let clean = body.innerHTML.replace(/style="[^"]*"/gi, '').replace(/<\/?font[^>]*>/gi, '').replace(/<center>/gi, '<div style="text-align: center;">').replace(/<\/center>/gi, '</div>').replace(/<p>\s*<\/p>/gi, '');
+                                htmlContent += clean + '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin: 60px 0;"><div style="width: 100px; height: 2px; background: linear-gradient(to right, transparent, #ccc, transparent);"></div></div>';
                             }
                         }
-                    } catch (err) {
-                        console.error('Error reading:', fullPath, err);
-                    }
+                    } catch (err) { console.error('Error:', fullPath); }
                 }
             }
-            
-            // Fallback: if spine method didn't work, try ordered file list
-            if (!htmlContent || htmlContent.trim().length < 100) {
-                const files = Object.keys(zip.files)
-                    .filter(f => {
-                        const lower = f.toLowerCase();
-                        return (lower.endsWith('.html') || lower.endsWith('.xhtml')) && 
-                               !lower.includes('nav') && 
-                               !lower.includes('toc') &&
-                               !lower.includes('cover');
-                    })
-                    .sort((a, b) => {
-                        // Try to sort by chapter numbers if present
-                        const numA = a.match(/\d+/);
-                        const numB = b.match(/\d+/);
-                        if (numA && numB) {
-                            return parseInt(numA[0]) - parseInt(numB[0]);
-                        }
-                        return a.localeCompare(b);
-                    });
-
-                for (let path of files) {
-                    try {
-                        const text = await zip.file(path).async('string');
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(text, 'text/html');
-                        const body = doc.querySelector('body');
-                        if (body) {
-                            // Clean up the HTML content
-                            let cleanContent = body.innerHTML;
-                            
-                            // Remove inline styles
-                            cleanContent = cleanContent.replace(/style="[^"]*"/gi, '');
-                            
-                            // Remove font tags
-                            cleanContent = cleanContent.replace(/<\/?font[^>]*>/gi, '');
-                            
-                            // Remove center tags
-                            cleanContent = cleanContent.replace(/<center>/gi, '<div style="text-align: center;">');
-                            cleanContent = cleanContent.replace(/<\/center>/gi, '</div>');
-                            
-                            // Remove empty paragraphs
-                            cleanContent = cleanContent.replace(/<p>\s*<\/p>/gi, '');
-                            
-                            htmlContent += cleanContent + 
-                                '<div style="height: 80px; display: flex; align-items: center; justify-content: center; margin: 60px 0;">' +
-                                '<div style="width: 100px; height: 2px; background: linear-gradient(to right, transparent, #ccc, transparent);"></div>' +
-                                '</div>';
-                        }
-                    } catch (err) {
-                        console.error('Error reading:', path);
-                    }
-                }
-            }
-
-            if (!htmlContent || htmlContent.trim().length < 50) {
-                throw new Error('No readable content found in EPUB file');
-            }
-
+            if (!htmlContent || htmlContent.trim().length < 50) throw new Error('No readable content found');
             document.getElementById('mainArea').innerHTML = `<div class="viewer">${htmlContent}</div>`;
             document.getElementById('zoomControls').classList.remove('hidden');
-            
-            // Setup scroll tracking
-            const area = document.getElementById('mainArea');
-            area.onscroll = handleScroll;
+            document.getElementById('mainArea').onscroll = handleScroll;
         }
-
+        
         function handleScroll(e) {
             if (!currentFile) return;
-            
-            const pos = e.target.scrollTop;
-            const height = e.target.scrollHeight - e.target.clientHeight;
-            const progress = height > 0 ? (pos / height) * 100 : 0;
-            
+            const pos = e.target.scrollTop, height = e.target.scrollHeight - e.target.clientHeight, progress = height > 0 ? (pos / height) * 100 : 0;
             document.getElementById('progress').textContent = `📖 ${Math.round(progress)}%`;
-            
             if (scrollTimeout) clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-                localStorage.setItem(`bookmark_${currentFile.name}`, pos);
-                localStorage.setItem(`progress_${currentFile.name}`, progress);
-            }, 2000);
+            scrollTimeout = setTimeout(() => { localStorage.setItem(`bookmark_${currentFile.name}`, pos); localStorage.setItem(`progress_${currentFile.name}`, progress); }, 2000);
         }
-
+        
         function checkBookmark() {
             if (!currentFile) return;
-            
-            const savedPos = localStorage.getItem(`bookmark_${currentFile.name}`);
-            const progress = localStorage.getItem(`progress_${currentFile.name}`) || 0;
-            
-            console.log('Checking bookmark:', savedPos, 'Progress:', progress);
-            
-            if (!savedPos || parseInt(savedPos) < 500 || parseFloat(progress) < 5) {
-                if (savedPos) document.getElementById('mainArea').scrollTop = parseInt(savedPos);
-                return;
-            }
-            
+            const savedPos = localStorage.getItem(`bookmark_${currentFile.name}`), progress = localStorage.getItem(`progress_${currentFile.name}`) || 0;
+            if (!savedPos || parseInt(savedPos) < 500 || parseFloat(progress) < 5) { if (savedPos) document.getElementById('mainArea').scrollTop = parseInt(savedPos); return; }
             const apiKey = localStorage.getItem('gemini_api_key');
-            if (apiKey) {
-                // Give content more time to settle
-                setTimeout(() => generateRecap(savedPos, apiKey), 500);
-            } else {
-                showModal('apiKeyModal');
-            }
+            if (apiKey) setTimeout(() => generateRecap(savedPos, apiKey), 500);
+            else showModal('apiKeyModal');
         }
-
+        
         async function generateRecap(position, key) {
             showModal('recapModal');
             const progress = localStorage.getItem(`progress_${currentFile.name}`) || 0;
-            
-            document.getElementById('recapContent').innerHTML = `
-                <div style="text-align: center; padding: 20px;">
-                    <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #4a90e2; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <p style="margin-top: 15px; color: #666;">Generating your recap...</p>
-                </div>
-            `;
-            
+            document.getElementById('recapContent').innerHTML = '<div style="text-align: center; padding: 20px;"><div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #4a90e2; border-radius: 50%; animation: spin 1s linear infinite;"></div><p style="margin-top: 15px; color: #666;">Generating recap...</p></div>';
             try {
                 const viewerEl = document.querySelector('.viewer');
-                if (!viewerEl) {
-                    throw new Error('Content not loaded. Please try again in a moment.');
-                }
+                if (!viewerEl) throw new Error('Content not loaded');
+                let fullText = (viewerEl.innerText || viewerEl.textContent || '').replace(/\s+/g, ' ').trim();
+                if (fullText.length < 500) throw new Error('Not enough content');
+                const readPercent = Math.min(parseFloat(progress) / 100, 0.95), readUpTo = Math.floor(fullText.length * readPercent);
+                const excerpt = fullText.substring(Math.max(0, readUpTo - 2000), readUpTo);
+                if (excerpt.length < 200) throw new Error('Continue reading a bit more!');
                 
-                // Get all text content
-                let fullText = viewerEl.innerText || viewerEl.textContent || '';
-                
-                // Clean up the text
-                fullText = fullText.replace(/\s+/g, ' ').trim();
-                
-                console.log('Full text length:', fullText.length);
-                
-                if (fullText.length < 500) {
-                    throw new Error('Not enough content available. Please try scrolling first.');
-                }
-                
-                // Use progress percentage to get text excerpt instead of scroll position
-                const readPercent = Math.min(parseFloat(progress) / 100, 0.95);
-                const readUpTo = Math.floor(fullText.length * readPercent);
-                
-                // Get last ~2000 characters of what was read
-                const startPos = Math.max(0, readUpTo - 2000);
-                const excerpt = fullText.substring(startPos, readUpTo);
-                
-                console.log('Excerpt length:', excerpt.length, 'Read up to:', readUpTo);
-                
-                if (excerpt.length < 200) {
-                    throw new Error('Not enough content read yet. Continue reading a bit more!');
-                }
-                
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                const response = await fetch(`${GEMINI_API_URL}?key=${key}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ 
-                            parts: [{ 
-                                text: `Please provide a brief 2-3 sentence recap of what has happened so far in this story. Focus on the key events and main points:\n\n${excerpt.slice(-1500)}` 
-                            }] 
-                        }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: `Brief 2-3 sentence recap:\n\n${excerpt.slice(-1500)}` }] }] })
                 });
-
-                console.log('API Response status:', response.status);
-
+                
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('API Error Response:', errorData);
-                    
-                    let errorMsg = 'API request failed. ';
-                    if (response.status === 400) {
-                        errorMsg += 'Invalid API key format. Please check your key in Settings.';
-                    } else if (response.status === 403) {
-                        errorMsg += 'API key is invalid or doesn\'t have permission. Get a new key from Google AI Studio.';
-                    } else if (response.status === 429) {
-                        errorMsg += 'Rate limit exceeded. Try again in a few minutes.';
-                    } else {
-                        errorMsg += errorData.error?.message || 'Please check your API key in Settings.';
-                    }
-                    
-                    throw new Error(errorMsg);
+                    const err = await response.json();
+                    let msg = 'API failed. ';
+                    if (response.status === 400) msg += 'Invalid key format';
+                    else if (response.status === 403) msg += 'Invalid key';
+                    else msg += err.error?.message || 'Check key';
+                    throw new Error(msg);
                 }
-
                 const data = await response.json();
-                
-                if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
-                    console.error('Unexpected API response:', data);
-                    throw new Error('API returned unexpected format. Please try again.');
-                }
-                
-                const recap = data.candidates[0].content.parts[0].text;
-                
-                document.getElementById('recapContent').innerHTML = `
-                    <div style="background: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
-                        📊 You're <strong>${Math.round(progress)}%</strong> through this book
-                    </div>
-                    <div style="background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #4a90e2;">
-                        <div style="font-size: 12px; text-transform: uppercase; color: #666; font-weight: 600; margin-bottom: 10px;">Previously in your book:</div>
-                        <div style="line-height: 1.6;">${recap}</div>
-                    </div>
-                    <div style="text-align: right; margin-top: 20px;">
-                        <button class="btn btn-secondary" onclick="startFromBeginning()">Start Over</button>
-                        <button class="btn btn-primary" onclick="continueReading()">Continue Reading →</button>
-                    </div>
-                `;
+                const recap = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Unable to generate';
+                document.getElementById('recapContent').innerHTML = `<div style="background: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0;">📊 ${Math.round(progress)}% through</div><div style="background: #f8f9fa; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #4a90e2;"><strong>Previously:</strong><br><br>${recap}</div><div style="text-align: right;"><button class="btn btn-secondary" onclick="document.getElementById('mainArea').scrollTop=0; hideModal('recapModal')">Start Over</button><button class="btn btn-primary" onclick="continueReading()">Continue →</button></div>`;
             } catch (error) {
-                console.error('Recap error:', error);
-                
-                document.getElementById('recapContent').innerHTML = `
-                    <div style="background: #fff3cd; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #ff9800;">
-                        <div style="font-weight: 600; margin-bottom: 10px;">⚠️ Could not generate recap</div>
-                        <div style="font-size: 14px; color: #856404;">${error.message}</div>
-                    </div>
-                    <div style="background: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0;">
-                        📊 You're <strong>${Math.round(progress)}%</strong> through this book
-                    </div>
-                    <div style="text-align: right; margin-top: 20px;">
-                        <button class="btn btn-secondary" onclick="hideModal('recapModal'); document.getElementById('mainArea').scrollTop = 0;">Start Over</button>
-                        <button class="btn btn-primary" onclick="continueReading()">Continue Reading →</button>
-                    </div>
-                `;
+                document.getElementById('recapContent').innerHTML = `<div style="background: #fff3cd; padding: 20px; border-radius: 6px; margin: 20px 0;"><strong>⚠️ Error</strong><br>${error.message}</div><div style="background: #f0f9ff; padding: 15px; border-radius: 6px;">📊 ${Math.round(progress)}%</div><div style="text-align: right; margin-top: 20px;"><button class="btn btn-primary" onclick="continueReading()">Continue →</button></div>`;
             }
         }
-
+        
         function saveApiKey() {
             const key = document.getElementById('apiKeyInput').value.trim();
             if (!key) return;
-            
             localStorage.setItem('gemini_api_key', key);
             hideModal('apiKeyModal');
-            
             const savedPos = localStorage.getItem(`bookmark_${currentFile.name}`);
-            if (savedPos && parseInt(savedPos) > 500) {
-                generateRecap(savedPos, key);
-            } else if (savedPos) {
-                document.getElementById('mainArea').scrollTop = parseInt(savedPos);
-            }
+            if (savedPos && parseInt(savedPos) > 500) generateRecap(savedPos, key);
+            else if (savedPos) document.getElementById('mainArea').scrollTop = parseInt(savedPos);
         }
-
-        function skipRecap() {
-            hideModal('apiKeyModal');
-            const savedPos = localStorage.getItem(`bookmark_${currentFile.name}`);
-            if (savedPos) document.getElementById('mainArea').scrollTop = parseInt(savedPos);
-        }
-
-        function continueReading() {
-            hideModal('recapModal');
-            const savedPos = localStorage.getItem(`bookmark_${currentFile.name}`);
-            if (savedPos) document.getElementById('mainArea').scrollTop = parseInt(savedPos);
-        }
-
-        function startFromBeginning() {
-            hideModal('recapModal');
-            document.getElementById('mainArea').scrollTop = 0;
-        }
-
+        
+        function skipRecap() { hideModal('apiKeyModal'); const savedPos = localStorage.getItem(`bookmark_${currentFile.name}`); if (savedPos) document.getElementById('mainArea').scrollTop = parseInt(savedPos); }
+        function continueReading() { hideModal('recapModal'); const savedPos = localStorage.getItem(`bookmark_${currentFile.name}`); if (savedPos) document.getElementById('mainArea').scrollTop = parseInt(savedPos); }
         function saveToHistory(filename) {
-            const title = filename.replace(/\.(epub|pdf)$/i, '').replace(/[-_]/g, ' ');
-            const history = JSON.parse(localStorage.getItem('book_history') || '[]');
+            const title = filename.replace(/\.(epub|pdf)$/i, '').replace(/[-_]/g, ' '), history = JSON.parse(localStorage.getItem('book_history') || '[]');
             const index = history.findIndex(b => b.filename === filename);
-            
             if (index >= 0) history.splice(index, 1);
-            
-            history.unshift({
-                filename: filename,
-                title: title,
-                lastOpened: new Date().toISOString()
-            });
-            
+            history.unshift({ filename, title, lastOpened: new Date().toISOString() });
             if (history.length > 8) history.pop();
             localStorage.setItem('book_history', JSON.stringify(history));
         }
-
-        function zoomIn() {
-            currentZoom = Math.min(200, currentZoom + 10);
-            updateZoom();
-        }
-
-        function zoomOut() {
-            currentZoom = Math.max(50, currentZoom - 10);
-            updateZoom();
-        }
-
-        function updateZoom() {
-            document.querySelector('.viewer').style.fontSize = currentZoom + '%';
-            document.getElementById('zoomLevel').textContent = currentZoom + '%';
-        }
-
-        function showModal(id) {
-            document.getElementById(id).classList.add('show');
-        }
-
-        function hideModal(id) {
-            document.getElementById(id).classList.remove('show');
-        }
-
-        function showTutorial() {
-            showModal('tutorialModal');
-        }
-
-        function showSettings() {
-            showModal('settingsModal');
-            const currentKey = localStorage.getItem('gemini_api_key') || '';
-            document.getElementById('settingsApiKey').value = currentKey;
-            updateApiKeyStatus();
-        }
-
+        function zoomIn() { currentZoom = Math.min(200, currentZoom + 10); updateZoom(); }
+        function zoomOut() { currentZoom = Math.max(50, currentZoom - 10); updateZoom(); }
+        function updateZoom() { document.querySelector('.viewer').style.fontSize = currentZoom + '%'; document.getElementById('zoomLevel').textContent = currentZoom + '%'; }
+        function showModal(id) { document.getElementById(id).classList.add('show'); }
+        function hideModal(id) { document.getElementById(id).classList.remove('show'); }
+        function showTutorial() { showModal('tutorialModal'); }
+        function showSettings() { showModal('settingsModal'); document.getElementById('settingsApiKey').value = localStorage.getItem('gemini_api_key') || ''; updateApiKeyStatus(); }
         function updateApiKeyStatus() {
-            const key = localStorage.getItem('gemini_api_key');
-            const statusEl = document.getElementById('apiKeyStatus');
-            if (key && key.length > 10) {
-                statusEl.innerHTML = '✅ API Key is configured';
-                statusEl.style.color = '#28a745';
-            } else {
-                statusEl.innerHTML = '❌ No API Key set - AI recaps disabled';
-                statusEl.style.color = '#dc3545';
-            }
+            const key = localStorage.getItem('gemini_api_key'), el = document.getElementById('apiKeyStatus');
+            el.innerHTML = key && key.length > 10 ? '✅ API Key configured' : '❌ No API Key set';
+            el.style.color = key && key.length > 10 ? '#28a745' : '#dc3545';
         }
-
-        function saveApiKeyFromSettings() {
+        async function saveApiKeyFromSettings() {
             const key = document.getElementById('settingsApiKey').value.trim();
-            if (!key) {
-                alert('Please enter an API key');
-                return;
-            }
-            
-            // Basic validation - Gemini API keys usually start with "AIza"
-            if (key.length < 20) {
-                alert('⚠️ API key seems too short. Make sure you copied the complete key.');
-                return;
-            }
-            
+            if (!key) { alert('Enter API key'); return; }
+            if (key.length < 20) { alert('⚠️ Key too short'); return; }
             localStorage.setItem('gemini_api_key', key);
             updateApiKeyStatus();
-            
-            // Test the API key
-            testApiKey(key);
-        }
-
-        async function testApiKey(key) {
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                const response = await fetch(`${GEMINI_API_URL}?key=${key}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: 'Hello' }] }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: 'Test' }] }] })
                 });
-
-                if (response.ok) {
-                    alert('✅ API Key is valid and working!');
-                } else {
-                    const error = await response.json();
-                    alert('❌ API Key test failed: ' + (error.error?.message || 'Invalid key'));
-                    console.error('API test error:', error);
-                }
-            } catch (error) {
-                alert('❌ Could not test API key. Check your internet connection.');
-                console.error('API test error:', error);
-            }
-        }
-
-        function clearHistory() {
-            if (confirm('Are you sure you want to clear your reading history? This cannot be undone.')) {
-                localStorage.removeItem('book_history');
-                alert('✅ Reading history cleared');
-                hideModal('settingsModal');
-                window.location.reload();
-            }
-        }
-
-        function clearAllBookmarks() {
-            if (confirm('Are you sure you want to clear all bookmarks and progress? This cannot be undone.')) {
-                const keys = Object.keys(localStorage);
-                keys.forEach(key => {
-                    if (key.startsWith('bookmark_') || key.startsWith('progress_') || key.startsWith('metadata_')) {
-                        localStorage.removeItem(key);
-                    }
-                });
-                alert('✅ All bookmarks and progress cleared');
-                hideModal('settingsModal');
-            }
-        }
-
-        function showLoading() {
-            document.getElementById('mainArea').innerHTML = '<div class="viewer"><p style="text-align: center; color: #666;">Loading...</p></div>';
+                if (response.ok) alert('✅ API Key works!');
+                else { const error = await response.json(); alert('❌ Failed: ' + (error.error?.message || 'Invalid')); }
+            } catch (error) { alert('❌ Connection error'); }
         }
     </script>
+    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
 </body>
 </html>
